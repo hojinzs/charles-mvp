@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { read, utils, writeFile } from 'xlsx';
 
 
 
@@ -6,6 +7,41 @@ export function MonitoringPage() {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [newKeyword, setNewKeyword] = useState('');
   const [newUrl, setNewUrl] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  // ... fetch keywords ...
+  
+  const toggleSelectAll = () => {
+    if (selectedIds.size === keywords.length && keywords.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(keywords.map(k => k.id)));
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} keywords?`)) return;
+
+    try {
+      await window.electronAPI.deleteKeywords(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      fetchKeywords();
+    } catch (err) {
+      console.error("Failed to delete keywords", err);
+      alert("Failed to delete keywords");
+    }
+  };
 
   const fetchKeywords = async () => {
     try {
@@ -32,6 +68,49 @@ export function MonitoringPage() {
       fetchKeywords();
     } catch (err) {
       console.error("Failed to add keyword", err);
+    }
+  };
+
+
+  const handleDownloadTemplate = () => {
+    const ws = utils.json_to_sheet([
+      { keyword: "예시_키워드", displayURL: "example.com" }
+    ]);
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, ws, "Template");
+    writeFile(wb, "monitoring_template.xlsx");
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const wb = read(arrayBuffer, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const jsonData = utils.sheet_to_json<{keyword: string, displayURL: string}>(ws);
+
+      const itemsToAdd = jsonData
+        .filter(item => item.keyword && item.displayURL)
+        .map(item => ({
+          keyword: String(item.keyword).trim(),
+          url: String(item.displayURL).trim()
+        }));
+
+      if (itemsToAdd.length > 0) {
+        await window.electronAPI.addKeywordsBulk(itemsToAdd);
+        fetchKeywords();
+        alert(`${itemsToAdd.length} keywords added successfully!`);
+      } else {
+        alert("No valid data found in file.");
+      }
+      
+      // Reset input
+      e.target.value = '';
+    } catch (err) {
+      console.error("Failed to process file", err);
+      alert("Failed to process file.");
     }
   };
 
@@ -71,11 +150,63 @@ export function MonitoringPage() {
         </div>
       </form>
 
+      {/* Bulk Upload */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+        <h3 className="text-sm font-semibold text-gray-600 mb-4 uppercase">Bulk Upload (Excel)</h3>
+        <div className="flex gap-4 items-center">
+          <button 
+            onClick={handleDownloadTemplate}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
+          >
+            <span>📥</span> Download Template
+          </button>
+          
+          <div className="relative">
+            <input 
+              type="file" 
+              accept=".xlsx, .xls, .csv"
+              onChange={handleFileUpload}
+              className="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-lg file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100
+              "
+            />
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 mt-2">
+          * Use the template to upload multiple keywords at once. Columns: <code>keyword</code>, <code>displayURL</code>.
+        </p>
+      </div>
+
+      {/* List Actions */}
+      {selectedIds.size > 0 && (
+        <div className="mb-4 bg-red-50 p-4 rounded-lg flex items-center justify-between border border-red-100 animate-fade-in">
+          <span className="text-red-700 font-medium text-sm">{selectedIds.size} keywords selected</span>
+          <button 
+            onClick={handleDeleteSelected}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold shadow-sm"
+          >
+            Delete Selected
+          </button>
+        </div>
+      )}
+
       {/* List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
+              <th className="p-5 w-12">
+                <input 
+                  type="checkbox" 
+                  checked={keywords.length > 0 && selectedIds.size === keywords.length}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                />
+              </th>
               <th className="p-5 font-semibold text-gray-600 text-sm">Keyword</th>
               <th className="p-5 font-semibold text-gray-600 text-sm">Target URL</th>
               <th className="p-5 font-semibold text-gray-600 text-sm">Current Rank</th>
@@ -84,7 +215,15 @@ export function MonitoringPage() {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {keywords.map((k) => (
-              <tr key={k.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={k.id} className={`hover:bg-gray-50 transition-colors ${selectedIds.has(k.id) ? 'bg-blue-50/50' : ''}`}>
+                <td className="p-5">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.has(k.id)}
+                    onChange={() => toggleSelect(k.id)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                  />
+                </td>
                 <td className="p-5 font-medium text-gray-900">{k.keyword}</td>
                 <td className="p-5 text-gray-500">{k.url}</td>
                 <td className="p-5">
@@ -107,7 +246,7 @@ export function MonitoringPage() {
             ))}
             {keywords.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-12 text-center text-gray-400">
+                <td colSpan={5} className="p-12 text-center text-gray-400">
                   No keywords are being monitored.
                   <br/>Add one to start tracking.
                 </td>

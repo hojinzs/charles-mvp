@@ -21,6 +21,8 @@ declare global {
   interface Window {
     electronAPI: {
       addKeyword: (keyword: string, url: string) => Promise<void>;
+      addKeywordsBulk: (items: {keyword: string, url: string}[]) => Promise<void>;
+      deleteKeywords: (ids: number[]) => Promise<void>;
       getKeywords: () => Promise<Keyword[]>;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       getRankings: (id: number) => Promise<any>;

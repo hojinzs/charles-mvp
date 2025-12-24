@@ -57,6 +57,29 @@ export const dbOps = {
     return stmt.run(keyword, url);
   },
 
+  addKeywordsBulk: (items: {keyword: string, url: string}[]) => {
+    const insert = db.prepare('INSERT INTO keywords (keyword, url) VALUES (?, ?)');
+    const transaction = db.transaction((rows) => {
+      for (const row of rows) {
+        insert.run(row.keyword, row.url);
+      }
+    });
+    return transaction(items);
+  },
+
+  deleteKeywordsBulk: (ids: number[]) => {
+    const deleteRankings = db.prepare('DELETE FROM keyword_rankings WHERE keyword_id = ?');
+    const deleteKeyword = db.prepare('DELETE FROM keywords WHERE id = ?');
+    
+    const transaction = db.transaction((idsToDelete) => {
+      for (const id of idsToDelete) {
+        deleteRankings.run(id); // Delete related rankings first (foreign key)
+        deleteKeyword.run(id);
+      }
+    });
+    return transaction(ids);
+  },
+
   getAllRankings: (): JoinedRanking[] => {
     const stmt = db.prepare(`
       SELECT 

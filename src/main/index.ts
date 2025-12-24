@@ -45,6 +45,18 @@ app.whenReady().then(() => {
     return dbOps.getKeywords();
   });
 
+  ipcMain.handle('keyword:add_bulk', (_event, items) => {
+    const res = dbOps.addKeywordsBulk(items);
+    scheduler.refreshKeywords();
+    return res;
+  });
+
+  ipcMain.handle('keyword:delete_bulk', (_event, ids) => {
+    const res = dbOps.deleteKeywordsBulk(ids);
+    scheduler.refreshKeywords(); // Refresh scheduler to stop monitoring deleted keywords
+    return res;
+  });
+
   ipcMain.handle('keyword:rankings', (_event, id) => {
     return dbOps.getRankings(id);
   });
