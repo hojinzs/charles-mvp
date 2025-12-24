@@ -1,0 +1,28 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build Output
+dist/
+release/
+build/
+
+# Mac
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Env
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Temp
+tmp/
+debug_naver.html
