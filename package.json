@@ -6,14 +6,17 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "dev:vite": "vite",
-    "dev:electron": "tsc src/main/index.ts --outDir dist/main && electron dist/main/index.js --dev",
+    "dev:electron": "tsc src/main/index.ts src/main/preload.ts --outDir dist/main --esModuleInterop --skipLibCheck && electron dist/main/index.js --dev",
     "verify-crawler": "tsc src/main/verify-crawler.ts --outDir dist/main --esModuleInterop --skipLibCheck && electron dist/main/verify-crawler.js",
-    "build": "tsc && vite build && electron-builder"
+    "build": "tsc && vite build && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.0.3",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -27,5 +30,10 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^7.3.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.5.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
   }
 }

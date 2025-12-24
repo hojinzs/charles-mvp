@@ -1,5 +1,8 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
+import { dbOps } from './db';
+import { scheduler } from './scheduler';
+
 
 // POC: Global reference to keep window alive
 let mainWindow: BrowserWindow | null = null;
@@ -31,6 +34,24 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // IPC Handlers
+  ipcMain.handle('keyword:add', (_event, keyword, url) => {
+    const res = dbOps.addKeyword(keyword, url);
+    scheduler.refreshKeywords();
+    return res;
+  });
+
+  ipcMain.handle('keyword:list', () => {
+    return dbOps.getKeywords();
+  });
+
+  ipcMain.handle('keyword:rankings', (_event, id) => {
+    return dbOps.getRankings(id);
+  });
+
+  // Start Scheduler
+  scheduler.start();
+
   createWindow();
 
   app.on('activate', () => {

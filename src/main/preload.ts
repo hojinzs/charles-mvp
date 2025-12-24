@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // Add IPC methods here
-  ping: () => ipcRenderer.invoke('ping'),
+  addKeyword: (keyword: string, url: string) => ipcRenderer.invoke('keyword:add', keyword, url),
+  getKeywords: () => ipcRenderer.invoke('keyword:list'),
+  getRankings: (id: number) => ipcRenderer.invoke('keyword:rankings', id),
 });
