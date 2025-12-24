@@ -49,6 +49,10 @@ app.whenReady().then(() => {
     return dbOps.getRankings(id);
   });
 
+  ipcMain.handle('keyword:history_all', () => {
+    return dbOps.getAllRankings();
+  });
+
   // Start Scheduler
   scheduler.start();
 

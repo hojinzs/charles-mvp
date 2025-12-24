@@ -41,19 +41,41 @@ export interface KeywordRanking {
   checked_at: string;
 }
 
+export interface JoinedRanking {
+  id: number;
+  rank: number;
+  checked_at: string;
+  keyword: string;
+  url: string;
+}
+
 // Data Access Object
 export const dbOps = {
+  // ... existing methods ...
   addKeyword: (keyword: string, url: string) => {
     const stmt = db.prepare('INSERT INTO keywords (keyword, url) VALUES (?, ?)');
     return stmt.run(keyword, url);
   },
+
+  getAllRankings: (): JoinedRanking[] => {
+    const stmt = db.prepare(`
+      SELECT 
+        r.id, r.rank, r.checked_at,
+        k.keyword, k.url
+      FROM keyword_rankings r
+      JOIN keywords k ON r.keyword_id = k.id
+      ORDER BY r.checked_at DESC
+    `);
+    return stmt.all() as JoinedRanking[];
+  },
+
 
   getKeywords: (): Keyword[] => {
     const stmt = db.prepare('SELECT * FROM keywords ORDER BY created_at DESC');
     return stmt.all() as Keyword[];
   },
 
-  addRanking: (keywordId: number, rank: number) => {
+  addRanking: (keywordId: number, rank: number | null) => {
     const transaction = db.transaction(() => {
       const insertStmt = db.prepare('INSERT INTO keyword_rankings (keyword_id, rank) VALUES (?, ?)');
       insertStmt.run(keywordId, rank);

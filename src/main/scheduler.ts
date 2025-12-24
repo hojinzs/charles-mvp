@@ -70,14 +70,9 @@ class Scheduler {
       const rank = await checkRanking(target.keyword, target.url);
       
       // Update DB
-      // We store 0 or -1 for "not found"? Or null? DB allows NULL.
-      // Let's store -1 if not found to distinguish from "not checked yet" (NULL) maybe?
-      // For now, let's store 0 if not found, or just keep null.
-      // Interface says `rank` is number.
-      const rankToSave = rank !== null ? rank : 0; 
-      
-      dbOps.addRanking(target.id, rankToSave);
-      console.log(`[Scheduler] Updated: ${target.keyword} -> Rank ${rankToSave}`);
+      // Store null if not found (rank is null from crawler)
+      dbOps.addRanking(target.id, rank);
+      console.log(`[Scheduler] Updated: ${target.keyword} -> Rank ${rank}`);
 
     } catch (err) {
       console.error(`[Scheduler] Failed to process ${target.keyword}:`, err);
