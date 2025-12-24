@@ -25,6 +25,9 @@ declare global {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       getRankings: (id: number) => Promise<any>;
       getAllHistory: () => Promise<JoinedRanking[]>;
+      setSchedulerInterval: (ms: number) => Promise<void>;
+      getSchedulerState: () => Promise<{ interval: number; isRunning: boolean }>;
+      getSchedulerQueue: () => Promise<Keyword[]>;
     };
   }
 }

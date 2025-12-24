@@ -23,6 +23,13 @@ export function RootLayout() {
           >
             랭킹 히스토리 (History)
           </Link>
+          <Link 
+            to="/scheduler" 
+            className="px-6 py-3 font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-100 transition-colors"
+            activeProps={{ className: "text-blue-600 border-blue-600" }}
+          >
+            스케줄러 (Scheduler)
+          </Link>
         </div>
 
         {/* Content */}

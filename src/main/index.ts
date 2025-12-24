@@ -53,6 +53,22 @@ app.whenReady().then(() => {
     return dbOps.getAllRankings();
   });
 
+  // Scheduler IPC
+  ipcMain.handle('scheduler:set_interval', (_event, ms) => {
+    scheduler.setInterval(ms);
+  });
+
+  ipcMain.handle('scheduler:get_state', () => {
+    return {
+      interval: scheduler.getInterval(),
+      isRunning: scheduler.getStatus(),
+    };
+  });
+
+  ipcMain.handle('scheduler:get_queue', () => {
+    return scheduler.getQueue();
+  });
+
   // Start Scheduler
   scheduler.start();
 

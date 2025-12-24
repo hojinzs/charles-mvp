@@ -3,6 +3,7 @@ import { RouterProvider, createRouter, createRootRoute, createRoute } from '@tan
 import { RootLayout } from './routes/root';
 import { MonitoringPage } from './routes/index';
 import { HistoryPage } from './routes/history';
+import { SchedulerPage } from './routes/scheduler';
 
 // 1. Create Route Tree
 const rootRoute = createRootRoute({
@@ -21,7 +22,13 @@ const historyRoute = createRoute({
   component: HistoryPage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, historyRoute]);
+const schedulerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/scheduler',
+  component: SchedulerPage,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, historyRoute, schedulerRoute]);
 
 // 2. Create Router
 const router = createRouter({ routeTree });

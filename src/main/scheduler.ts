@@ -6,6 +6,7 @@ class Scheduler {
   private isRunning = false;
   private currentIndex = 0;
   private keywords: Keyword[] = [];
+  private currentIntervalMs: number = 60000;
 
   constructor() {
     this.refreshKeywords();
@@ -21,11 +22,14 @@ class Scheduler {
     }
   }
 
-  start(intervalMs: number = 60000) {
+  start(intervalMs?: number) {
     if (this.isRunning) return;
     
+    const interval = intervalMs || this.currentIntervalMs;
+    this.currentIntervalMs = interval;
+
     this.isRunning = true;
-    console.log(`[Scheduler] Started. Interval: ${intervalMs}ms`);
+    console.log(`[Scheduler] Started. Interval: ${this.currentIntervalMs}ms`);
 
     // Run immediately first? Or wait? 
     // Usually wait for interval, but user might want immediate action. 
@@ -34,7 +38,7 @@ class Scheduler {
 
     this.intervalId = setInterval(() => {
       this.processNext();
-    }, intervalMs);
+    }, this.currentIntervalMs);
   }
 
   stop() {
@@ -80,6 +84,36 @@ class Scheduler {
 
     // Move to next
     this.currentIndex = (this.currentIndex + 1) % this.keywords.length;
+  }
+
+  setInterval(ms: number) {
+    if (ms < 1000) {
+      console.warn('[Scheduler] Interval too short, setting to 1000ms');
+      ms = 1000;
+    }
+    this.currentIntervalMs = ms;
+    console.log(`[Scheduler] Interval updated to ${ms}ms`);
+    
+    if (this.isRunning) {
+      this.stop();
+      this.start(this.currentIntervalMs);
+    }
+  }
+
+  getInterval() {
+    return this.currentIntervalMs;
+  }
+
+  getStatus() {
+    return this.isRunning;
+  }
+
+  getQueue() {
+    if (this.keywords.length === 0) return [];
+    // Return keywords rotated so currentIndex is first
+    const part1 = this.keywords.slice(this.currentIndex);
+    const part2 = this.keywords.slice(0, this.currentIndex);
+    return [...part1, ...part2];
   }
 }
 
