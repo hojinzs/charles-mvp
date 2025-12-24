@@ -1,20 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-interface JoinedRanking {
-  id: number;
-  rank: number;
-  checked_at: string;
-  keyword: string;
-  url: string;
-}
 
-declare global {
-  interface Window {
-    electronAPI: {
-      getAllHistory: () => Promise<JoinedRanking[]>;
-    };
-  }
-}
+
+
 
 export function HistoryPage() {
   const [history, setHistory] = useState<JoinedRanking[]>([]);

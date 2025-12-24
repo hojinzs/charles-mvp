@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-interface Keyword {
-  id: number;
-  keyword: string;
-  url: string;
-  last_rank: number | null;
-  last_checked_at: string | null;
-  created_at: string;
-}
+
 
 export function MonitoringPage() {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
